@@ -1,0 +1,1127 @@
+\documentclass[a4paper,10pt]{article}
+
+% =========================
+%        Packages
+% =========================
+\usepackage[left=2.5cm, right=2.5cm, top=3cm, bottom=3cm]{geometry}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% --- code block style ---
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!5},
+    showstringspaces=false,
+    captionpos=b,
+    tabsize=4
+}
+
+% =========================
+%        Document
+% =========================
+\begin{document}
+
+% =========================
+%        Cover
+% =========================
+\begin{center}
+    \vspace*{1cm}
+    {\Huge ZO-1 Capstone 双周报 3}
+    
+    \vspace{2.2cm}
+    {\Large March 15， 2026}
+    
+    \vspace{1.2cm}
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{@{} >{\bfseries}l l @{}}
+        \toprule[1.5pt]
+        项目企业 & 中欧瑞博 \\
+        项目名称 & 股东回报因子探索：考虑净回购的股息率 + 因子 \\
+        学生姓名 & 沈可涵 (123090483), 蒋之伟 (123090233), 杨衍韬 (123090731) \\
+        报告周期 & 2026 年 3 月 2 日至 2026 年 3 月 15 日 \\
+        提交日期 & 2026 年 3 月 15 日 \\
+        \bottomrule[1.5pt]
+    \end{tabular}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+% =========================
+%        Main Text
+% =========================
+
+\section{大纲与本期更新摘要}
+
+本双周报告主要围绕“股东回报因子”的数据基础建设、基准策略构建以及因子预测能力检验三个方面展开。相比上一阶段主要集中在数据获取与初步探索，本阶段的工作重点转向构建完整的研究框架，即从底层财务数据清洗出发，逐步建立可计算的基本面变量、可回测的基准策略以及可检验的因子研究体系，从而为后续系统性的股东回报策略研究奠定基础。
+
+总体而言，本期工作可以概括为以下四个方面：
+
+\begin{enumerate}
+
+\item \textbf{财务数据底表的系统清洗与标准化}
+
+对港股财务数据进行系统清洗与标准化处理，包括现金流量表、利润表等底层报表数据的统一格式转换、报表口径筛选以及历史版本去重。通过这一过程，构建了结构一致且可直接用于计算的财务底表，为后续基本面变量的计算提供了可靠的数据基础。
+
+\item \textbf{企业自由现金流（FCFF）的初步构建}
+
+在完成财务数据清洗的基础上，初步构造企业自由现金流（Free Cash Flow to Firm, FCFF）指标。FCFF 是衡量企业内生现金创造能力的重要财务指标，也是分析企业是否具备持续向股东返还资本能力的重要基础变量。本阶段通过将现金流量表与利润表进行匹配，并基于经营现金流、利息支出以及资本开支构造 FCFF 指标，从而建立了一个能够反映企业真实现金创造能力的基本面变量。同时，通过对典型公司（如 0700.HK）的时间序列可视化检验，验证了该指标计算结果的合理性。
+
+\item \textbf{Benchmark 基准策略的构建}
+
+为评估后续股东回报因子的增量信息，本研究构建了一个“高股息 + 低波动”的 benchmark 基准策略。该策略以恒生综合指数（HSCI）成分股为股票池，在满足基本流动性约束的前提下，先筛选高股息股票，再从中选择历史波动率较低的标的构建组合。通过这一方式，可以得到一个具有代表性的防御型红利投资组合。回测结果表明，该 benchmark 在样本期内表现出较为稳健的长期收益，并且市值加权组合在收益水平与回撤控制方面均优于等权组合，因此可以作为后续增强策略的重要参照基准。
+
+\item \textbf{股东回报因子的横截面预测能力检验}
+
+在基准策略之外，本文还从因子研究的角度系统检验股东回报相关变量的横截面预测能力。具体而言，在日频股票面板数据上构建了股息率因子、回购收益率因子以及综合股东回报因子，并通过信息系数（IC）方法检验其对未来收益的预测能力。
+
+在数据处理过程中发现，股息与回购变量在日频层面具有明显的稀疏性特征，因此本文采用 60 日与 120 日滚动窗口对相关变量进行时间聚合，从而提高因子信号的稳定性。实证结果表明，股息率因子在横截面上具有稳定的正向预测能力，而回购收益率单独使用时信息含量相对较弱；将两者结合构造的综合股东回报因子在整体表现上与股息率因子相近，但在部分时期能够提供额外信息。
+
+\end{enumerate}
+
+在上述研究基础上，本文进一步引入国盛证券提出的股东回报八分组框架，从企业自由现金流覆盖能力以及外部融资行为两个维度，对企业财务特征进行交叉分类。在实施该框架的过程中，研究发现底层成交额数据在 2018 年前后存在明显的量纲切换问题，即部分年份成交额以“千港元”为单位记录，而后续年份则以“港元”为单位记录。如果不进行修复，将导致早期样本的流动性严重低估。为解决这一问题，本研究提出基于自然周滚动中位数的量纲识别与修复方法，从而恢复数据的一致性，并保证回测结果的可靠性。
+
+综合来看，本期工作的核心贡献主要体现在以下三个方面：
+
+\begin{itemize}
+
+\item 构建统一的港股财务数据底表，并初步完成 FCFF 指标的计算，为后续基本面分析提供基础；
+
+\item 建立“高股息 + 低波动”的 benchmark 策略，并得到稳健的回测结果，为后续策略增强提供比较基准；
+
+\item 在日频层面系统检验股东回报因子的预测能力，并通过八分组财务分类框架进一步拓展从“分红水平”到“股东回报质量”的研究视角。
+
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+\section{数据读取与清洗——三大表}
+
+本部分首先处理财务现金流量表数据，原始文件为 \texttt{hk\_cashflow\_statement.csv}。该表包含公司代码、公告日期、报告起止日期、报表类型、报告类型以及若干现金流相关财务字段，例如经营活动现金流、资本开支、债务变动和股利支付等。由于原始数据中同时包含不同口径、不同报告期以及同一报表的多个历史版本，因此在构建因子前需要先进行标准化清洗。
+
+\colorbox{yellow}{三大表的处理相似，不一一赘述，仅以现金流量表的处理为例（cf）。}
+
+\subsection{原始字段与处理目标}
+
+在现金流量表中，我们主要关注以下几类字段：
+
+\begin{itemize}
+    \item \textbf{公司识别字段}：\texttt{S\_INFO\_COMPCODE}、\texttt{S\_INFO\_WINDCODE}
+    \item \textbf{时间字段}：\texttt{ANN\_DT}、\texttt{BEGIN\_DT}、\texttt{END\_DT}
+    \item \textbf{报表类型字段}：\texttt{STATEMENT\_TYPE}、\texttt{REPORT\_TYPE}
+    \item \textbf{关键财务字段}：\\
+    \texttt{NET\_CASH\_FLOWS\_OPER\_ACT}、\texttt{LESS\_CAP\_EXPENSE}、\texttt{DEBT\_INCR}、\texttt{LESS\_DEBT\_DECR}、\texttt{TOT\_DIV\_PAID}
+\end{itemize}
+
+其中，本节最核心的清洗目标有两个：
+
+第一，统一时间和数值字段格式，保证后续计算可直接进行；
+
+第二，基于 \texttt{STATEMENT\_TYPE} 和 \texttt{REPORT\_TYPE} 筛选出一致口径的年度合并报表，并在存在多个版本时保留最新版本。
+
+\subsection{时间字段标准化}
+
+原始数据中的日期字段并不完全统一。例如，\texttt{ANN\_DT} 存在 \texttt{20140807.0} 这类带小数点的字符串形式，而 \texttt{BEGIN\_DT} 和 \texttt{END\_DT} 则通常是标准的 \texttt{YYYYMMDD} 整数格式。为了便于排序、去重和后续按时间对齐，需要先将这些字段统一转为 \texttt{datetime} 类型。
+
+具体处理上，先对 \texttt{ANN\_DT} 去除末尾的 \texttt{.0}，再按 \texttt{\%Y\%m\%d} 格式解析；对于 \texttt{BEGIN\_DT} 和 \texttt{END\_DT}，则直接按相同格式转换。若存在非法值或缺失值，则统一记为缺失时间。
+
+这一处理的目的在于保证：
+\begin{itemize}
+    \item 报告期间可以被准确识别；
+    \item 公告时间可用于区分同一报表的不同历史版本；
+    \item 后续财务数据与市场数据合并时，时间索引保持一致。
+\end{itemize}
+
+
+\subsection{数值字段标准化}
+
+现金流表中的关键财务变量在原始数据中可能带有字符串格式、空值或异常符号，因此需要统一转为数值型。本文重点保留以下字段：
+
+\begin{itemize}
+    \item \texttt{NET\_CASH\_FLOWS\_OPER\_ACT}：经营活动产生的现金流量净额
+    \item \texttt{LESS\_CAP\_EXPENSE}：资本开支
+    \item \texttt{DEBT\_INCR}：债务增加额
+    \item \texttt{LESS\_DEBT\_DECR}：债务偿还额
+    \item \texttt{TOT\_DIV\_PAID}：支付股利、利润或偿付利息所支付的现金中的股利部分
+\end{itemize}
+
+对这些字段统一使用 \texttt{pd.to\_numeric(errors="coerce")} 转换为数值型，无法识别的值记为缺失值。这样做可以避免后续因字符串格式问题导致的计算错误，也为自由现金流、股东回报等指标构造打下基础。
+
+
+\subsection{报表口径筛选：只保留年度合并报表}
+
+由于同一家公司的财务数据库中可能同时存在母公司报表、合并报表、季度报表、中报和年报，为保证样本口径一致，本文仅保留：
+
+\begin{itemize}
+    \item \texttt{STATEMENT\_TYPE == 408001000}：合并报表
+    \item \texttt{REPORT\_TYPE == 419007000}：年报
+\end{itemize}
+
+\colorbox{yellow}{这样做有两个原因。}
+
+第一，合并报表能够更全面地反映上市公司整体经营和现金流状况，相比母公司口径更适合用于横截面比较。
+
+第二，年报数据覆盖完整会计年度，财务指标更稳定，也更适合构造长期基本面因子；若混入季度报或中报，容易因披露频率不同而引入额外噪声。
+
+因此，在清洗过程中先按这两个条件进行筛选，只保留统一口径下的年度合并现金流量表记录。
+
+
+\subsection{多版本报表去重：保留最新版本}
+
+同一家公司、同一报告期间的报表在数据库中可能出现多个版本。这通常是因为后续修订、数据更新或历史版本留存造成的。如果不处理，会导致同一财务期重复计入，从而影响样本唯一性。
+
+为了解决这个问题，本文按照 \texttt{update\_time} 和 \texttt{ANN\_DT} 对数据进行排序，并在相同公司、相同报告期间、相同报告类型和报表类型的组合下，仅保留最后一个版本。具体去重键为：
+
+\begin{itemize}
+    \item \texttt{S\_INFO\_COMPCODE}
+    \item \texttt{BEGIN\_DT}
+    \item \texttt{END\_DT}
+    \item \texttt{REPORT\_TYPE}
+    \item \texttt{STATEMENT\_TYPE}
+\end{itemize}
+
+在排序后使用 \texttt{drop\_duplicates(..., keep="last")}，即可保留最新披露或最新更新的记录。
+
+这一处理保证了每家公司每个年度最终只对应一条唯一、最新的现金流量表数据，有助于提高后续因子构造的一致性与可重复性。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{初步计算 FCFF}
+在完成现金流量表和利润表的读取与清洗后，第二步是基于两张财务报表初步构造企业自由现金流（Free Cash Flow to Firm, FCFF）。FCFF 反映企业在满足经营和资本支出需求后，可供全部资本提供者（包括债权人和股东）分享的现金流，是衡量企业内生现金创造能力的重要指标。
+
+\subsection{数据清洗函数的统一处理}
+为保证现金流量表与利润表在口径和时间维度上的一致性，本文定义了统一的清洗函数 \linebreak \texttt{clean\_hk\_statement()}，分别对两张报表进行标准化处理。该函数主要包括以下几个步骤。
+
+首先，对公告日期 \texttt{ANN\_DT} 以及报告起止日期 \texttt{BEGIN\_DT}、\texttt{END\_DT} 进行日期格式转换。原始数据中这些字段可能以字符串或带小数点的形式存储，因此需要统一转化为 \texttt{datetime} 类型，便于后续排序、匹配和去重。
+
+其次，对指定的财务字段进行数值化处理。对于现金流量表，主要包括经营活动现金流量净额、资本开支、债务增加额、债务偿还额和股利支付额；对于利润表，则主要保留营业收入、营业利润、税前利润、税项、净利润、普通股股东应占利润、EBITDA 以及折旧摊销等指标。这一步将所有关键字段统一转换为数值格式，无法识别的内容记为缺失值。
+
+随后，函数仅保留统一口径的财务记录，即：
+\begin{itemize}
+    \item \texttt{STATEMENT\_TYPE = 408001000}：合并报表
+    \item \texttt{REPORT\_TYPE = 419007000}：年报
+\end{itemize}
+
+这样可以避免母公司报表、季度报表、中报等不同口径混杂带来的偏差。
+
+最后，为处理同一公司同一报告期存在多个历史版本的问题，函数会先依据 \texttt{update\_time} 和 \texttt{ANN\_DT} 排序，再按照股票代码、报告起止日期、报告类型和报表类型进行去重，仅保留最后一个版本。经过这一处理后，每家公司在每个年度只保留一条最新、唯一的财务记录。
+
+\subsection{现金流量表与利润表的匹配}
+在完成清洗后，本文分别得到处理后的现金流量表 \texttt{cf} 和利润表 \texttt{inc}。为了构造 FCFF，需要将两张报表按相同的财务报告维度进行合并。具体匹配键为：
+\begin{itemize}
+    \item \texttt{S\_INFO\_WINDCODE}
+    \item \texttt{BEGIN\_DT}
+    \item \texttt{END\_DT}
+    \item \texttt{REPORT\_TYPE}
+    \item \texttt{STATEMENT\_TYPE}
+\end{itemize}
+
+这些字段共同定义了一家公司某一特定报告期间下的统一财务记录。由于利息支出 \texttt{INT\_EXP} 位于利润表中，因此在合并时从利润表中提取该字段，并与现金流量表进行左连接，从而构造完整的 FCFF 计算底表。
+
+\subsection{FCFF 的初步构造逻辑}
+在本项目中，FCFF 的初步计算公式定义为：
+\begin{equation}
+    \text{FCFF} = \texttt{NET\_CASH\_FLOWS\_OPER\_ACT} + \texttt{INT\_EXP} - \texttt{LESS\_CAP\_EXPENSE}
+\end{equation}
+其中：
+\begin{itemize}
+    \item \texttt{NET\_CASH\_FLOWS\_OPER\_ACT} 表示经营活动产生的现金流量净额；
+    \item \texttt{INT\_EXP} 表示利息支出；
+    \item \texttt{LESS\_CAP\_EXPENSE} 表示资本开支。
+\end{itemize}
+
+这一构造逻辑的含义是：从企业经营现金流出发，加回利息支出（因为 FCFF 面向全部资本提供者，应消除融资结构影响），再扣除维持和扩张经营所需的资本开支，从而得到企业在经营层面创造的自由现金流。
+
+从财务含义上看，该版本 FCFF 可以理解为一种基于现金流量表和利润表的简化计算方式。它能够较好地反映企业真实现金创造能力，相比单纯使用净利润或经营现金流，更适合作为后续基本面分析和横截面因子构造的基础变量。
+
+\subsection{初步结果与作用}
+在完成合并与计算后，得到的 \texttt{fcff\_df} 中保留了股票代码及对应的 FCFF 值，即每家公司在特定财务报告期下的初步自由现金流测度。该结果为后续分析提供了基础，包括但不限于：
+\begin{itemize}
+    \item 构造 FCFF 相关估值指标；
+    \item 结合市值计算 FCFF yield；
+    \item 与股息率、回购收益率等变量共同构造股东回报类因子；
+    \item 进一步转换为日频或月频面板用于回测。
+\end{itemize}
+
+需要说明的是，这里得到的是初步 FCFF，其目标是先基于可得字段建立一个统一、可计算的自由现金流指标。后续如果需要提高财务口径的严谨性，还可以进一步考虑税盾调整、利息支出口径修正以及部分异常值处理等问题。
+
+\subsection{可视化展示：FCFF 随时间变化趋势图}
+
+为直观呈现企业自由现金流（FCFF）的演变趋势，本文绘制了目标公司（以 0700.HK 为例）的 FCFF 时间序列图。图中横轴为报告期末日期（Report Date），纵轴为 FCFF 数值（单位：10¹¹，即千亿级别），数据点以圆形标记并连接成折线，便于观察长期趋势与波动。
+
+如图所示，FCFF 在 2012 年后呈现持续增长态势，尤其在 2020 年后显著加速，2024 年达到峰值，反映出企业内生现金创造能力的显著增强。该图不仅验证了前文计算的合理性，也为后续分析（如 FCFF 估值、股东回报因子等）提供了直观支撑。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\linewidth]{1.png}
+    \caption{0700.HK FCFF over time（单位：10¹¹）}
+    \label{fig:fcff_trend}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Benchmark 的构建：红利低波基准策略}
+
+为评估后续股东回报类因子的增量信息，本文首先构建一个基准策略（benchmark）作为比较对象。考虑到港股市场中高股息与低波动风格具有较强代表性，本文采用“高股息 + 低波动”的选股逻辑，并进一步加入流动性约束，构造一个可交易的月频股票组合。该 benchmark 既能反映市场中经典防御型红利策略的收益特征，也能够为后续策略增强提供统一参照。
+
+\subsection{数据来源与频率统一}
+
+在 benchmark 构建中，主要使用以下四类数据：
+
+\begin{enumerate}
+    \item 股息率数据 \texttt{dy}：月频数据，用于衡量股票的红利水平；
+    \item 价格数据 \texttt{price}：日频数据，用于计算波动率与流动性，同时提取月末复权价格以构造未来收益；
+    \item 股本数据 \texttt{shares}：用于结合价格计算股票市值；
+    \item HSCI 成分股数据 \texttt{hsci}：用于限定股票池，仅在恒生综合指数成分股范围内选股。
+\end{enumerate}
+
+\colorbox{yellow}{由于不同数据表的原始频率并不一致，本文对所有变量统一映射到月度频率。}具体而言，日频价格数据先用于计算滚动风险与流动性指标，再在每个月末提取对应值；股息率本身为月频，直接按月份对齐；HSCI 成分数据也按月份映射到对应股票池。最终，所有变量都使用 \texttt{date\_m}（年月 period）作为统一时间索引，以确保选股时点一致。
+
+\subsection{月频收益与市值的构造}
+
+为了进行月频组合回测，本文先基于港股复权收盘价构造个股的下月收益率。设股票 $i$ 在月末 $t$ 的复权收盘价为 $P_{i,t}^{adj}$，则其在下一个月的收益率定义为：
+
+\begin{equation}
+R_{i,t+1} = \frac{P_{i,t+1}^{adj}}{P_{i,t}^{adj}} - 1
+\end{equation}
+
+在实现中，首先对日频价格按月份取最后一个交易日的复权收盘价，然后计算相邻两个月之间的涨跌幅，并将其向前对齐到时点 $t$。这意味着在 $t$ 月末形成的组合权重，对应的是 $t+1$ 月实现的收益。
+
+同时，为支持市值加权组合，本文利用月末收盘价与同期总股本计算股票市值。设股票 $i$ 在月末 $t$ 的收盘价为 $P_{i,t}$，总股本为 $Shares_{i,t}$，则市值定义为：
+
+\begin{equation}
+MCAP_{i,t} = P_{i,t} \times Shares_{i,t}
+\end{equation}
+
+这一市值变量将在后续组合加权中使用。
+
+\subsection{红利稳定度因子的构造}
+
+除了当前股息率水平外，本文还考虑股息支付的稳定性，以反映公司分红政策的持续性。具体而言，对每只股票过去 36 个月的股息率序列做滚动线性回归，取时间趋势斜率作为“红利稳定度”指标。
+
+设股票 $i$ 在时点 $t$ 之前的股息率序列为 $\{DY_{i,\tau}\}$，对滚动窗口内的月份编号 $k = 1,2,\dots,n$ 做如下回归：
+
+\begin{equation}
+DY_{i,k} = \alpha_i + \beta_i k + \varepsilon_{i,k}
+\end{equation}
+
+其中，$\beta_i$ 即为该股票在当前时点下的股息率趋势斜率。若 $\beta_i > 0$，说明近几年股息率整体呈上升趋势；若 $\beta_i < 0$，则说明其股息水平可能在下降。考虑到过短样本下斜率估计不稳定，本文要求滚动窗口内至少有 12 个有效观测值，否则不计算该指标。
+
+虽然在最终选股时，当前版本 benchmark 主要直接使用股息率水平进行排序，但红利稳定度作为辅助变量被保留下来，为后续策略扩展和风格分析提供支持。
+
+\subsection{低波动因子的构造}
+
+为了刻画个股风险水平，本文使用过去一年的日收益率波动率构造低波因子。首先由日收盘价计算日收益率：
+
+\begin{equation}
+r_{i,d} = \frac{P_{i,d}}{P_{i,d-1}} - 1
+\end{equation}
+
+然后在过去 252 个交易日的滚动窗口内计算标准差，并年化得到波动率：
+
+\begin{equation}
+\sigma_{i,t} = \sqrt{252} \cdot \mathrm{Std}(r_{i,d}), \quad d \in [t-251, t]
+\end{equation}
+
+考虑到部分股票可能上市时间较短，本文要求至少有 100 个有效日收益率观测值才计算该指标。最终，在每个月末提取该滚动波动率，作为月频低波动因子。
+
+这一指标越低，意味着股票历史价格波动越小，通常对应更强的防御属性。
+
+\subsection{流动性因子的构造}
+
+为了保证组合具有可交易性，本文对股票加入流动性筛选。流动性指标采用过去约 3 个月（63 个交易日）的日均成交额（Average Daily Trading Value, ADTV）：
+
+\begin{equation}
+ADTV_{i,t} = \frac{1}{63}\sum_{d=t-62}^{t} Amount_{i,d}
+\end{equation}
+
+其中，\texttt{amount} 为股票每日成交额。由于原始数据单位为“千”，因此在实际筛选时将阈值设定为 \texttt{10000}，即对应约 1000 万的成交额标准。
+
+本文在每个月末提取过去 63 个交易日的平均成交额作为月频流动性指标，并在选股时剔除流动性不足的股票，以降低组合在真实交易中的冲击成本和执行风险。
+
+\subsection{股票池与因子合并}
+
+在构造完股息率、红利稳定度、波动率和流动性指标后，本文将所有变量按照股票代码和月份进行合并，并进一步叠加 HSCI 成分股约束，仅保留指数成分范围内的样本。这样做有两个目的：
+
+第一，控制股票池范围，使 benchmark 更具有市场代表性；  
+第二，避免过多小市值或极端冷门股票进入组合，从而提升基准策略的可比性与可实现性。
+
+合并后的因子表包含以下核心字段：
+
+\begin{itemize}
+    \item \texttt{dy}：月频股息率；
+    \item \texttt{dy\_trend}：过去 36 个月股息率趋势斜率；
+    \item \texttt{volatility}：过去 252 日年化波动率；
+    \item \texttt{adtv\_3m}：过去 63 日日均成交额；
+    \item \texttt{is\_hsci}：是否属于 HSCI 股票池。
+\end{itemize}
+
+这些变量共同构成 benchmark 的选股基础。
+
+\subsection{选股逻辑}
+
+本文 benchmark 采用分层筛选的方式构建月度持仓组合。具体步骤如下。
+
+\subsubsection{红利连续性筛选}
+
+对于每个月 $t$，首先考察股票在过去 36 个月内的股息率历史。如果某只股票在这 36 个月内股息率全部为正，且不存在缺失值，则将其视为“连续稳定分红”的候选股票。记该股票集合为：
+
+\begin{equation}
+\mathcal{U}_t^{div} = \{ i : DY_{i,\tau} > 0,\ \forall \tau \in [t-35, t] \}
+\end{equation}
+
+这一条件的目的是筛选出具有持续分红历史的公司，而不是仅凭某一个月较高的静态股息率进行判断。
+
+如果满足该条件的股票数量过少，代码中设置了放宽机制，即直接使用当前月份全部候选股票，以避免过度筛选导致组合不可构造。
+
+\subsubsection{流动性约束}
+
+在连续分红股票池中，进一步要求股票满足流动性条件：
+
+\begin{equation}
+ADTV_{i,t} \geq 10{,}000
+\end{equation}
+
+由于 \texttt{amount} 的单位为千，这一阈值对应约 1000 万成交额。经过该约束后，股票池进一步缩小为同时具备持续分红属性和基本交易容量的股票集合。
+
+\subsubsection{高股息筛选}
+
+在满足前述条件的股票中，按照当前股息率 \texttt{dy} 从高到低排序，选取排名靠前的前 10\% 股票作为高股息子样本。若时点 $t$ 的可选股票数为 $N_t$，则保留：
+
+\begin{equation}
+\mathcal{U}_t^{high\_dy} = \text{Top } 10\% \text{ of } DY_{i,t}
+\end{equation}
+
+这一步体现了 benchmark 的红利风格暴露，即优先配置静态股息率较高的股票。
+
+\subsubsection{低波动筛选}
+
+在高股息子样本中，再根据波动率从低到高排序，选取波动率最低的 5 只股票构成最终持仓组合：
+
+\begin{equation}
+\mathcal{P}_t = \text{Bottom } 5 \text{ of } \sigma_{i,t}, \quad i \in \mathcal{U}_t^{high\_dy}
+\end{equation}
+
+因此，该 benchmark 本质上是一个“先选高股息，再选低波动”的双重筛选策略。
+
+
+
+\subsection{策略选股示例}
+
+为了验证选股逻辑的有效性，我们展示回测末期若干月份的实际持仓股票。表 \ref{tab:stock_selection} 给出了最近三个月根据红利低波策略筛选得到的股票组合。
+
+\begin{table}[H]
+\centering
+\caption{Recent Stock Selections of the Benchmark Strategy}
+\label{tab:stock_selection}
+\begin{tabular}{ll}
+\toprule
+Month & Selected Stocks \\
+\midrule
+2025-07 & 0341.HK, 0288.HK, 0303.HK, 0152.HK, 0639.HK \\
+2025-08 & 0014.HK, 0288.HK, 0303.HK, 0639.HK, 0152.HK \\
+2025-09 & 1883.HK, 0288.HK, 0303.HK, 3360.HK, 0883.HK \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{策略选股的实证检验}
+
+为了进一步验证基准策略选股逻辑的合理性，本文对策略在最近几个时期所选出的股票进行简单的案例分析。表 \ref{tab:stock_selection} 展示了策略在最近三个月中筛选出的部分股票。从这些公司所处行业、盈利模式以及分红政策来看，可以发现其整体特征与“高股息 + 低波动”的策略目标高度一致。
+
+首先，多只入选股票属于现金流稳定、分红政策成熟的传统行业。例如，\textbf{0288.HK（万洲国际，WH Group）}是全球最大的猪肉生产和加工企业之一，属于典型的消费必需品行业。该类企业需求稳定、盈利波动较小，长期保持稳定的分红政策，因此通常具有较高且持续的股息率。同时，由于其业务模式成熟、盈利来源稳定，其股价波动率相对较低，因此较容易被红利低波策略选中。
+
+其次，\textbf{0883.HK（中国海洋石油，CNOOC）}作为中国最大的海上油气生产商之一，具有较强的盈利能力和稳定的现金流。能源行业在油价周期较为稳定阶段往往能够产生较高的自由现金流，因此公司通常通过较高的分红比例回馈股东，从而形成较高的股息率。此外，CNOOC 作为大型国有能源企业，市值规模较大、经营稳定，其股价波动性相对较低，也符合低波动策略的筛选标准。
+
+第三，\textbf{0303.HK（伟易达集团，VTech Holdings）}是一家知名电子产品制造企业，主要从事通讯设备及电子学习产品的生产。该公司长期保持较稳定的盈利能力和分红政策，历史上具有持续分红的记录，因此在股息率维度上表现突出。同时，由于其经营较为稳健，股价波动幅度通常低于高成长型科技公司，这也使其更容易进入低波动股票池。
+
+此外，\textbf{0341.HK（大家乐集团，Café de Coral）}是香港本地领先的餐饮连锁企业。餐饮消费属于典型的防御型行业，其收入来源较为稳定，公司长期维持稳定的现金分红政策，因此股息率水平较高。由于其业务主要集中在本地消费市场，盈利波动相对有限，股票价格波动率通常也较低。
+
+最后，一些基础设施或公用事业相关企业同样出现在策略选股中，例如 \textbf{1883.HK（中信国际电讯，CITIC Telecom International）}和 \textbf{3360.HK（远东宏信，Far East Horizon）}。这类公司通常拥有稳定的业务模式和持续的现金流来源，因此具备长期分红能力。同时，其行业属性相对稳健，股价波动率通常低于周期性行业公司。
+
+总体来看，这些被策略选中的股票普遍具有以下几个共同特征：第一，企业经营成熟、现金流稳定；第二，长期保持持续分红政策，从而形成较高的股息率；第三，股价波动率相对较低。上述特征与本文所构建的“高股息 + 低波动”选股标准高度一致，说明基准策略能够有效识别具有稳定分红和防御属性的上市公司。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{组合收益计算}
+
+在每个月末 $t$ 确定持仓组合 $\mathcal{P}_t$ 后，组合在 $t+1$ 月的收益率由所选股票的未来一个月收益率加权得到。本文考虑两种加权方式。
+
+\subsubsection{等权组合}
+
+若组合中共有 $K_t$ 只股票，则每只股票权重均为 $1/K_t$，组合收益率为：
+
+\begin{equation}
+R_{p,t+1}^{EW} = \frac{1}{K_t} \sum_{i \in \mathcal{P}_t} R_{i,t+1}
+\end{equation}
+
+等权配置可以更清晰地反映选股逻辑本身的效果，避免大市值股票对收益的过度主导。
+
+\subsubsection{市值加权组合}
+
+若组合中股票 $i$ 在时点 $t$ 的市值为 $MCAP_{i,t}$，则其权重定义为：
+
+\begin{equation}
+w_{i,t}^{CW} = \frac{MCAP_{i,t}}{\sum_{j \in \mathcal{P}_t} MCAP_{j,t}}
+\end{equation}
+
+相应地，市值加权组合收益率为：
+
+\begin{equation}
+R_{p,t+1}^{CW} = \sum_{i \in \mathcal{P}_t} w_{i,t}^{CW} R_{i,t+1}
+\end{equation}
+
+若某个月缺失市值数据或组合总市值为零，则代码中自动退化为等权收益，以保证回测连续性。
+
+\subsection{净值曲线与回撤计算}
+
+在得到每期组合收益率后，可以递推构造净值曲线。设组合初始净值为 1，则净值定义为：
+
+\begin{equation}
+NV_t = \prod_{\tau=1}^{t} (1 + R_{p,\tau})
+\end{equation}
+
+同时，为度量策略风险，本文进一步计算动态回撤（drawdown）：
+
+\begin{equation}
+DD_t = \frac{NV_t}{\max_{\tau \le t} NV_\tau} - 1
+\end{equation}
+
+该指标反映策略净值相对于历史高点的回落幅度，是评估组合风险承受能力的重要指标。
+
+\subsection{绩效评价指标}
+
+为了比较等权与市值加权 benchmark 的表现，本文计算了以下四类常见绩效指标。
+
+\subsubsection{年化收益率}
+
+若月度收益率序列为 $\{R_{p,t}\}$，则年化收益率定义为：
+
+\begin{equation}
+\mathrm{AnnRet} = 12 \cdot \overline{R_p}
+\end{equation}
+
+其中 $\overline{R_p}$ 为月收益率均值。
+
+\subsubsection{年化波动率}
+
+\begin{equation}
+\mathrm{AnnVol} = \sqrt{12} \cdot \mathrm{Std}(R_{p,t})
+\end{equation}
+
+\subsubsection{夏普比率}
+
+\begin{equation}
+\mathrm{Sharpe} = \frac{\mathrm{AnnRet}}{\mathrm{AnnVol}}
+\end{equation}
+
+在当前实现中，夏普比率未额外扣除无风险利率，因此可理解为一个简化的风险收益比指标。
+
+\subsubsection{最大回撤}
+
+\begin{equation}
+\mathrm{MaxDD} = \min_t \left( \frac{NV_t}{\max_{\tau \le t} NV_\tau} - 1 \right)
+\end{equation}
+
+最大回撤越大，说明策略在历史上经历过越深的净值回落。
+
+
+\subsection{回测结果}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{2.png}
+\caption{Equity Curve and Drawdown of the High Dividend Low Volatility Benchmark Strategy}
+\label{fig:benchmark_curve}
+\end{figure}
+
+Figure \ref{fig:benchmark_curve} 该图展示了 2012 年至 2025 年期间基准策略的累计净值与回撤情况。无论是 等权组合 还是 市值加权组合，两者均表现出较为稳定的长期增长趋势。相比之下，市值加权组合取得了更高的累计收益，同时其最大回撤也明显小于等权组合，表现出更优的风险收益特征。
+
+\begin{table}[H]
+\centering
+\caption{Performance Metrics of the Benchmark Strategy}
+\label{tab:benchmark_performance}
+\begin{tabular}{lcc}
+\toprule
+Metric & Equal Weight & Market Cap Weight \\
+\midrule
+Annualized Return & 14.66\% & 19.41\% \\
+Annualized Volatility & 18.96\% & 19.29\% \\
+Sharpe Ratio & 0.77 & 1.01 \\
+Max Drawdown & -41.14\% & -28.02\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+
+
+\subsection{Benchmark 的作用}
+
+总体而言，本文构造的 benchmark 是一个兼顾红利、低波动与流动性约束的月频港股选股组合。该策略具有以下几个特征：
+
+第一，它代表了一个经典且直观的防御型红利投资框架，可作为港股高分红风格的基准参照；  
+第二，它同时提供等权和市值加权两个版本，便于比较选股效应与权重分配效应；  
+第三，它在构建中加入了 HSCI 股票池与成交额约束，使 benchmark 更贴近真实可交易环境。
+
+因此，在后续章节中，本文可以将基于股东回报、回购、FCFF yield 等变量构造的策略，与这一 benchmark 在收益、风险、夏普比率和最大回撤等维度进行系统比较，以判断新增因子是否具备显著的增量解释力和投资价值。
+
+
+
+
+
+
+\section{股东回报因子的构建与信息系数检验}
+
+\subsection{研究思路}
+
+除了构建“高股息—低波动”基准策略外，本文还从因子研究的角度出发，对股东回报相关变量的横截面预测能力进行检验。具体而言，本文以港股 HSCI 成分股为研究对象，在日频层面构建股息率因子、回购收益率因子以及综合股东回报因子，并通过信息系数（Information Coefficient, IC）分析其对下一期收益率的解释能力。
+
+这一部分的核心目标不是直接构造投资组合，而是回答如下问题：股息、回购及其合成指标是否能够在横截面上有效预测未来收益？若能，其预测能力的强弱和稳定性如何？
+
+\subsection{数据来源与样本范围}
+
+本节所使用的数据主要包括以下几类：
+
+\begin{itemize}
+    \item \texttt{hk\_announcement.csv}：港股公告数据；
+    \item \texttt{em\_buyback\_filtered.csv}：股票回购数据；
+    \item \texttt{HSCI.csv}：恒生综合指数成分股数据；
+    \item \texttt{hk\_mktcap\_long.csv}：市值数据；
+    \item \texttt{hk\_dividendyield.h5}：股息率数据；
+    \item \texttt{hk\_price.csv}：价格与成交数据；
+    \item \texttt{hk\_shares.h5}：股本数据。
+\end{itemize}
+
+为了保证样本一致性，本文首先对所有数据进行统一预处理。具体包括：
+
+\begin{enumerate}
+    \item 将股票代码统一标准化为四位数字加 \texttt{.hk} 的格式，例如 \texttt{0005.hk}、\texttt{0700.hk}；
+    \item 将日期字段统一转换为 \texttt{datetime} 类型；
+    \item 筛选 2015 年 1 月 1 日之后的数据；
+    \item 通过每日动态的 HSCI 成分股表进行样本过滤，仅保留当日属于 HSCI 成分股的股票。
+\end{enumerate}
+
+经过上述步骤后，本文分别构造出价格、股息率、市值和回购金额的清洗后样本，并在此基础上合并形成统一的日频面板数据。
+
+
+
+\subsection{因子稀疏性与滚动处理的必要性}
+
+\colorbox{yellow}{因子稀疏性与滚动处理的必要性}
+
+在完成价格、股息率、回购金额以及市值数据的清洗与合并之后，本文构建了统一的日频股票面板数据。该面板以价格数据为基础，并叠加股息率、回购金额和市值等变量，同时仅保留 2015 年 1 月 1 日之后且属于当日恒生综合指数（HSCI）成分股的样本。
+
+在这一筛选条件下，最终得到的日频面板共包含约 $1.57$ 百万条观测值，对应 $1044$ 只股票以及 $3383$ 个交易日。平均而言，每个交易日的股票池规模约为 $464$ 只股票。表 \ref{tab:panel_summary} 展示了面板数据的基本统计特征。
+
+\begin{table}[H]
+\centering
+\caption{Summary Statistics of the Daily Panel Dataset}
+\label{tab:panel_summary}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Total Observations & 1,574,979 \\
+Number of Stocks & 1,044 \\
+Number of Trading Days & 3,383 \\
+Average Daily HSCI Universe Size & 464.36 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+在上述样本范围内，可以观察到股东回报相关变量在日频层面呈现出明显的稀疏特征。特别是回购数据，由于股票回购通常以事件形式发生，并不会在每日持续出现，因此其在日频面板中高度稀疏。统计结果表明，回购金额非零的观测仅占全部样本的约 $1.82\%$，而约 $98.18\%$ 的观测值为零或缺失。换言之，在绝大多数交易日中，绝大部分公司并没有发生回购行为。
+
+从横截面角度来看，这种稀疏性更加明显。平均每个交易日约有 $8.49$ 只股票发生回购行为，而中位数仅为 $4$ 只股票，相比于平均 $464$ 只股票的样本规模，这一比例非常低。相关统计结果见表 \ref{tab:buyback_sparse}。
+
+\begin{table}[H]
+\centering
+\caption{Sparsity of Buyback Data}
+\label{tab:buyback_sparse}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Buyback Non-zero Ratio & 1.82\% \\
+Buyback Zero Ratio & 98.18\% \\
+Average Daily Buyback Stocks & 8.49 \\
+Median Daily Buyback Stocks & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+股息率变量在日频面板中也呈现出类似的特征。由于股息信息通常在公告时点更新，而不会在每日交易层面持续变化，因此其在日频数据中同样较为稀疏。统计结果显示，仅约 $3.70\%$ 的观测值具有非零股息率，而约 $96.30\%$ 的观测值为零或缺失。这一特征表明，在高频层面直接使用单日股息率信号可能受到披露时间离散性的影响，从而降低因子排序的稳定性。
+
+为了缓解这一问题，本文对股东回报相关变量采用滚动窗口（rolling window）的方式进行时间聚合。具体而言，对于回购收益率因子，本文分别计算过去 $60$ 个交易日和 $120$ 个交易日的滚动累计回购收益率；对于股息率因子，则计算相同窗口长度下的滚动平均值。通过这种方式，可以将短期内零散发生的回购或分红信息在时间维度上进行平滑处理，从而更好地刻画企业在一段时间内持续向股东返还资本的整体水平。
+
+从统计特征上看，滚动处理能够显著增强回购信号的稳定性。原始回购收益率序列的标准差约为 $4.67\times10^{-4}$，而在采用 $60$ 日和 $120$ 日滚动窗口之后，其标准差分别上升至约 $2.14\times10^{-3}$ 和 $3.23\times10^{-3}$。这一结果说明滚动累积能够有效放大原始信号的截面差异，使不同股票之间的回购强度更加可辨识。相关统计结果见表 \ref{tab:rolling_stats}。
+
+\begin{table}[H]
+\centering
+\caption{Standard Deviation of Factors Before and After Rolling}
+\label{tab:rolling_stats}
+\begin{tabular}{lc}
+\toprule
+Factor & Standard Deviation \\
+\midrule
+Buyback Yield (Raw) & $4.67\times10^{-4}$ \\
+Buyback Yield (60-day Rolling) & $2.14\times10^{-3}$ \\
+Buyback Yield (120-day Rolling) & $3.23\times10^{-3}$ \\
+Dividend Yield (Raw) & 8.20 \\
+Dividend Yield (60-day Rolling) & 7.66 \\
+Dividend Yield (120-day Rolling) & 7.08 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+综合来看，由于股息与回购数据在日频层面具有明显的稀疏性与事件驱动特征，直接使用单日变量构造因子会导致横截面信号过于稀疏，从而降低因子的稳定性。 因此，本文在后续因子构造中主要采用滚动窗口方式对相关变量进行时间聚合，并以 $60$ 日和 $120$ 日两个窗口长度作为主要研究设定。这种处理不仅能够提高因子的稳定性，也能够更准确地刻画公司在一段时期内持续向股东返还资本的行为特征。
+
+
+
+
+
+
+
+
+
+
+
+\subsection{面板数据构建}
+
+在完成各类底层数据清洗后，本文以价格数据为主表，将股息率、回购数据和市值数据逐步合并，得到最终的日频股票面板。面板数据的核心字段包括：
+
+\begin{itemize}
+    \item \texttt{date}：交易日期；
+    \item \texttt{ticker}：股票代码；
+    \item \texttt{AdjClose}：复权收盘价；
+    \item \texttt{dy}：股息率；
+    \item \texttt{buyback\_amount}：回购金额；
+    \item \texttt{mktcp}：公司市值。
+\end{itemize}
+
+在此基础上，本文进一步构造个股未来一期收益率，作为因变量。设股票 $i$ 在日期 $t$ 的复权收盘价为 $P_{i,t}$，则下一期收益率定义为：
+
+\begin{equation}
+ret_{i,t+1} = \frac{P_{i,t+1}}{P_{i,t}} - 1
+\end{equation}
+
+其中，未来收益率通过对每只股票的价格序列进行 \texttt{shift(-1)} 计算得到，即以当前日期的因子值预测下一交易日的收益率。
+
+\subsection{因子定义}
+
+\subsubsection{回购收益率因子}
+
+本文首先定义股票的回购收益率（Buyback Yield）为：
+
+\begin{equation}
+BuybackYield_{i,t} = \frac{BuybackAmount_{i,t}}{MktCap_{i,t}}
+\end{equation}
+
+其中 $BuybackAmount_{i,t}$ 表示公司在日期 $t$ 的回购金额，$MktCap_{i,t}$ 表示对应的市值。该指标用于刻画公司通过股票回购向股东返还资本的强度。
+
+考虑到回购行为通常具有事件稀疏且影响持续的特点，仅使用单日回购收益率可能较为噪声，因此本文进一步构造滚动累计版本：
+
+\begin{equation}
+BuybackYield^{(60)}_{i,t} = \sum_{\tau=t-59}^{t} BuybackYield_{i,\tau}
+\end{equation}
+
+以及
+
+\begin{equation}
+BuybackYield^{(120)}_{i,t} = \sum_{\tau=t-119}^{t} BuybackYield_{i,\tau}
+\end{equation}
+
+分别表示过去 60 日和过去 120 日累计回购收益率，用于衡量一段时期内股东回购回报的累积效应。
+
+\subsubsection{股息率因子}
+
+股息率因子直接来源于股息率数据 \texttt{dy}。考虑到单日股息率可能存在跳变或披露时点噪声，本文采用滚动均值的方式构造平滑版本。例如对于 120 日窗口，定义为：
+
+\begin{equation}
+DY^{(120)}_{i,t} = \frac{1}{120} \sum_{\tau=t-119}^{t} DY_{i,\tau}
+\end{equation}
+
+即过去 120 个交易日股息率的滚动平均值，用于刻画股票在较长时间窗口内的稳定分红水平。
+
+\subsubsection{股东回报综合因子}
+
+在股息率和回购收益率基础上，本文构造综合股东回报因子（Shareholder Yield）：
+
+\begin{equation}
+ShareholderYield_{i,t} = DY_{i,t} + BuybackYield_{i,t}
+\end{equation}
+
+进一步地，在滚动窗口设定下，可以构造：
+
+\begin{equation}
+ShareholderYield^{(120)}_{i,t} = DY^{(120)}_{i,t} + BuybackYield^{(120)}_{i,t}
+\end{equation}
+
+该因子同时考虑现金分红与股票回购两种主要的股东回报方式，因此在经济含义上比单独的股息率或回购收益率更加全面。
+
+\subsection{横截面标准化处理}
+
+由于不同因子的量纲不同，且横截面分布可能存在偏态和极端值，本文在计算 IC 之前，先对因子在每个交易日进行横截面排序标准化。具体定义为：
+
+\begin{equation}
+CSRank(x_{i,t}) = RankPct(x_{i,t}) - 0.5
+\end{equation}
+
+其中 $RankPct(x_{i,t})$ 表示股票 $i$ 在日期 $t$ 横截面上的百分位排名。经过这一变换后，因子值大致落在区间 $[-0.5,0.5]$ 内，从而便于不同因子之间进行比较。
+
+\subsection{信息系数（IC）检验方法}
+
+为了衡量因子对未来收益的预测能力，本文采用信息系数（Information Coefficient）作为主要评价指标。在每个交易日 $t$，计算因子值与下一期收益率之间的 Spearman 秩相关系数：
+
+\begin{equation}
+IC_t = \mathrm{corr}_{rank}(f_{i,t}, ret_{i,t+1})
+\end{equation}
+
+其中 $f_{i,t}$ 表示股票 $i$ 在日期 $t$ 的横截面因子值，$ret_{i,t+1}$ 表示下一期收益率。
+
+选择 Spearman 相关系数而非 Pearson 相关系数的原因在于，因子研究更关注排序能力而非线性幅度关系。如果某个因子能够稳定地将未来收益较高的股票排在横截面的前部，则其 IC 将表现为持续为正。
+
+在得到时间序列上的 $IC_t$ 后，本文进一步计算以下统计指标：
+
+\paragraph{IC 均值}
+
+\begin{equation}
+IC_{mean} = \frac{1}{T} \sum_{t=1}^{T} IC_t
+\end{equation}
+
+\paragraph{IC 标准差}
+
+\begin{equation}
+IC_{std} = \sqrt{\frac{1}{T-1} \sum_{t=1}^{T} (IC_t - IC_{mean})^2}
+\end{equation}
+
+\paragraph{t 统计量}
+
+\begin{equation}
+t = \frac{IC_{mean}}{IC_{std}} \sqrt{T}
+\end{equation}
+
+该统计量用于检验平均 IC 是否显著偏离 0。若 $|t|$ 较大，则说明因子在统计意义上具有较强的预测能力。
+
+\subsection{累计 IC 曲线}
+
+除了报告 IC 的统计指标外，本文还绘制累计 IC 曲线以观察因子预测能力在时间维度上的稳定性。累计 IC 定义为：
+
+\begin{equation}
+CumIC_t = \sum_{\tau=1}^{t} IC_{\tau}
+\end{equation}
+
+若累计 IC 曲线长期呈现上升趋势，则说明因子在大多数时期能够提供正向的横截面预测能力；反之，如果曲线震荡较大或呈下降趋势，则说明因子有效性较弱或方向不稳定。
+
+
+\subsection{回测}
+
+\subsubsection{60 日滚动窗口下的因子表现}
+
+\begin{table}[H]
+\centering
+\caption{IC Statistics under 60-Day Rolling Window}
+\label{tab:ic60}
+\begin{tabular}{lccc}
+\toprule
+Metric & DY & Buyback Yield & Shareholder Yield \\
+\midrule
+IC Mean & 0.0252 & 0.0035 & 0.0253 \\
+IC Std & 0.1463 & 0.0490 & 0.1401 \\
+t-stat & 9.23 & 3.70 & 9.31 \\
+N & 2645 & 2645 & 2645 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{3.png}
+\caption{Cumulative Information Coefficient under 60-Day Window}
+\label{fig:ic60}
+\end{figure}
+
+
+从表 \ref{tab:ic60} 可以看到，在 60 日滚动窗口下，股息率因子（DY）和股东回报因子（Shareholder Yield）均表现出较为显著的正向 IC。股息率因子的平均 IC 为 0.0252，对应的 t 统计量为 9.23，说明该因子在统计意义上具有显著的预测能力。
+
+相比之下，回购收益率因子的平均 IC 为 0.0035，虽然仍为正值，但显著性相对较弱。这表明单独的回购信号在短期横截面预测中的信息含量有限。
+
+图 \ref{fig:ic60} 展示了累计 IC 曲线。从时间序列上看，股息率和综合股东回报因子的累计 IC 呈现出稳定上升趋势，说明这两个因子在样本期内具有持续的正向预测能力。
+
+\subsubsection{120 日滚动窗口下的因子表现}
+
+\begin{table}[H]
+\centering
+\caption{IC Statistics under 120-Day Rolling Window}
+\label{tab:ic120}
+\begin{tabular}{lccc}
+\toprule
+Metric & DY & Buyback Yield & Shareholder Yield \\
+\midrule
+IC Mean & 0.0247 & 0.0031 & 0.0248 \\
+IC Std & 0.1412 & 0.0498 & 0.1406 \\
+t-stat & 9.00 & 3.25 & 9.09 \\
+N & 2645 & 2645 & 2645 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{4.png}
+\caption{Cumulative Information Coefficient under 120-Day Window}
+\label{fig:ic120}
+\end{figure}
+
+
+表 \ref{tab:ic120} 展示了在 120 日滚动窗口下的 IC 统计结果。可以发现，与 60 日窗口相比，整体结果保持稳定。股息率因子和综合股东回报因子的平均 IC 仍然维持在约 0.025 的水平，并且具有较高的 t 统计量，表明其预测能力具有较强的统计显著性。
+
+从累计 IC 曲线（图 \ref{fig:ic120}）来看，股息率和股东回报因子依然表现出稳定的上升趋势，而回购收益率因子虽然方向为正，但累计增速明显较慢。这说明在样本期内，分红信息对未来收益的解释能力明显强于单独的回购信号。
+
+整体而言，综合股东回报因子在两个滚动窗口下均表现出较为稳定的正向 IC，这表明将股息率与回购收益率结合能够在一定程度上提升因子的预测能力。
+
+
+
+
+\subsection{本节小结}
+
+与前文构建的 benchmark 策略不同，本节更侧重于从横截面资产定价的角度检验因子的预测能力。通过 IC 均值、t 统计量以及累计 IC 曲线，可以系统评估股息率、回购收益率和综合股东回报因子的有效性与稳定性，从而为后续多因子选股模型的构建提供依据。
+
+
+
+
+\section{基于国盛证券框架的股东回报八分组构建与底层数据修复}
+
+在完成前序章节关于企业自由现金流（FCFF）的初步测算 以及红利低波基准策略（Benchmark）的构建后，本阶段研究转向深度财务特征分类。我们引入国盛证券的八分组框架，旨在通过内生造血能力与外部融资行为的交叉维度，对港股标的进行精细化刻画。
+
+\subsection{底层数据量纲断层的发现与诊断}
+
+在对 2010 年至 2025 年全量样本进行回测初步尝试时，我们通过数据诊断表发现，2018 年以前的有效样本量（Total\_Valid\_Records）虽然存在，但经过流动性筛选后进入各分组的股票数量极度匮乏。
+
+通过量价交叉验证，即计算理论成交额（收盘价 $\times$ 成交量）与原始名义成交额的比值（Ratio），我们识别出了严重的量纲结构性断层。在 2010 年至 2017 年间，比值中位数高度集中在 1000 附近，说明原始成交额字段以 \lq 千港元 \rq 为单位。2018 年为过渡年，千元单位占比降至 61.97\%，而一元单位占比升至 37.22\%。自 2019 年起，一元单位占比稳居 97\% 以上，标志着数据供应商完成了量纲切换。
+
+若不进行修复，早期大量蓝筹股会因成交额被低估一千倍而无法通过日均交易量大于一百万港元的门槛，导致回测结果失真。
+
+\subsection{周频中位数（Weekly Median）修复算法}
+
+为了实现稳健修复，我们摒弃了单日修正逻辑，采用基于自然周的滚动中位数法（Weekly Median）。该算法通过计算 \lq 股票代码 + 自然周 \rq 维度的 Ratio 中位数，有效过滤了单日尾盘异动带来的比值噪音，且能精准定位月中发生的单位切换时点。当周度比值落入 $[900, 1180]$ 区间时，系统自动对该周 amount 字段乘以 1000 进行还原。
+
+\subsection{八分组逻辑定义与特征画像}
+
+基于修复后的清洁数据，我们利用 FCFF 覆盖度、股权融资及债权融资三个维度构建八分组模型。分类依据如下表所示：
+
+\begin{table}[H]
+\centering
+\caption{股东回报八分组分类依据及财务特征}
+\label{tab:eight_groups}
+\small
+\begin{tabular}{lp{1.8cm}p{1.8cm}p{1.8cm}p{4.5cm}}
+\toprule
+组别 & FCFF覆盖度 & 股权融资 & 债权融资 & 核心财务画像 \\
+\midrule
+Group 1 & True & False & False & 内生造血极强，无外部依赖 \\
+Group 2 & True & False & True & 现金流充裕，通过债务扩张 \\
+Group 3 & True & True & False & 现金流健康，伴随股权扩张 \\
+Group 4 & True & True & True & 内生外行双轮驱动 \\
+Group 5 & False & False & False & 现金流不足，消耗存量储备 \\
+Group 6 & False & False & True & 借债维持回报或运营 \\
+Group 7 & False & True & False & 股权稀释型分红/运营 \\
+Group 8 & False & True & True & 极度依赖外部输血 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{回测绩效与结果分析}
+
+本研究分别执行了动态对齐与静态调仓两种模式下的全量回测。
+
+\textbf{动态调仓}：指在每个月月末时点，基于该时刻市场上已公开披露的最新的年度合并财务报表数据，对投资组合进行逐月滚动对齐与换仓调整。该模式实现了财务信号与交易数据的动态匹配，能够实时捕捉企业财务分组特征的边际演变，并在回测过程中有效规避了前视偏差。
+
+\textbf{静态调仓}：指基于企业财报会计年度末日，并结合法定披露限期进行的年度定期对齐换仓。对于占港股市场主体的十二月财年企业，调仓节点通常设定在次年三月三十一日。通过取基准对齐日（财年截止后三个月）与真实公告日的孰晚值，该模式旨在评估基本面因子在低频换仓环境下对长期超额收益的预测效力与稳健性。
+
+\subsubsection{动态对齐模式表现}
+
+在动态对齐模式下，Group 1 与 Group 2 展现了明显的稳健性。从累计净值曲线来看，现金流覆盖度高的组别（Group 1--4）整体表现优于失血组。
+
+\begin{table}[H]
+\centering
+\caption{动态对齐各分组复合年化收益率对比表}
+\label{tab:dynamic_full}
+\begin{tabular}{lrr}
+\toprule
+组别 (Group) & 等权 CAGR & 市值加权 CAGR \\
+\midrule
+Group 1 & 3.25\% & 6.21\% \\
+Group 2 & 5.72\% & 6.34\% \\
+Group 3 & -2.15\% & 0.05\% \\
+Group 4 & 0.83\% & 6.41\% \\
+Group 5 & -0.10\% & 0.21\% \\
+Group 6 & 2.24\% & 4.36\% \\
+Group 7 & 0.10\% & -5.68\% \\
+Group 8 & 0.04\% & 2.96\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{5.png}
+    \caption{动态对齐模式下各分组累计净值与回撤走势图}
+    \label{fig:dynamic_plot}
+\end{figure}
+
+\subsubsection{静态调仓模式表现}
+
+静态调仓模式通过财报截止日后推三个月的逻辑，解决了港股财年多样化导致的信号滞后问题。结果显示，在低频调仓环境下，内生造血能力强的企业依然维持了稳定的超额表现。
+
+\begin{table}[H]
+\centering
+\caption{静态调仓各分组复合年化收益率对比表}
+\label{tab:static_full}
+\begin{tabular}{lrr}
+\toprule
+组别 (Group) & 等权 CAGR & 市值加权 CAGR \\
+\midrule
+Group 1 & 3.21\% & 6.61\% \\
+Group 2 & 5.59\% & 6.22\% \\
+Group 3 & -2.14\% & 0.85\% \\
+Group 4 & 0.60\% & 6.32\% \\
+Group 5 & -0.13\% & 0.07\% \\
+Group 6 & 2.40\% & 4.55\% \\
+Group 7 & 0.51\% & -6.28\% \\
+Group 8 & 0.13\% & 2.99\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{6.png}
+    \caption{静态调仓模式下各分组累计净值与回撤走势图}
+    \label{fig:static_plot}
+\end{figure}
+
+结合上述两类模式的测算结果，各分组表现出显著的业绩分化特征。以 Group 1 与 Group 2 为代表的 \lq 造血 \rq 型企业在年化收益与回撤控制上均优于以 Group 7 与 Group 8 为代表的 \lq 失血 \rq 型企业，这为后续构造综合股东回报因子提供了扎实的基本面支撑。
+
+
+
+\section{组会反馈与下一步改进方向}
+
+在本周组会讨论过程中，针对当前研究框架和实证结果，导师与团队成员提出了若干需要进一步改进的问题。主要集中在策略构建、因子计算以及研究复现三个方面。后续研究将围绕以下方向进行优化：
+
+\begin{enumerate}
+
+\item \textbf{Benchmark 红利低波策略的改进}
+
+目前构建的“高股息 + 低波动”策略在部分时期选中的股票数量相对较少，组合集中度较高，即使作为选股策略，其覆盖范围也略显不足。后续需要通过适当放宽筛选条件或调整排序逻辑，以增加组合中股票的数量，从而提高组合的分散度与稳定性。
+
+此外，在市值加权组合中，需要特别关注权重过度集中问题。若个别超大市值股票权重过高，可能会导致组合收益被少数股票主导，从而削弱策略本身的选股信息。因此，后续将考虑在市值加权基础上引入权重上限（weight cap），以避免单只股票对组合收益产生过度影响。
+
+\item \textbf{研究复现过程中的信息时点确认}
+
+在复现券商研报中的策略框架时，需要进一步确认研报的发布时间以及所使用数据的时间窗口，以避免潜在的信息泄露问题（look-ahead bias）。具体而言，需要核实研究报告发布时市场能够获取的公开信息范围，并确保回测过程中仅使用当时可获得的数据，从而保证实证结果的严谨性与可复现性。
+
+\item \textbf{因子计算与回购信号的进一步优化}
+
+在因子研究方面，首先需要再次检查横截面信息系数（IC）计算过程中对缺失值的处理方式，例如在计算 Spearman 秩相关时是否正确剔除了缺失观测，以避免样本选择偏差对 IC 统计结果产生影响。
+
+此外，当前回购收益率因子的预测能力相对较弱。后续研究将进一步探索改进回购因子的构造方式，例如通过调整滚动窗口、改进回购金额的标准化方法，或结合其他股东回报相关变量，以增强回购信号在横截面预测中的信息含量。
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
